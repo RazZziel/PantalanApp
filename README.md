@@ -1,2 +1,2 @@
 # PantalanApp
-Navegación, reserva y aparcamiento en pantalán
+Navegación, reserva y atraque en pantalán
