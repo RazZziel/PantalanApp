@@ -13,6 +13,10 @@ class Sensor(object):
 
 class SRF02(Sensor):
 
+    minValue = 4000
+    maxValue = 16600
+    divide = (maxValue - minValue) / 100
+
     def __init__(self, bus, address):
         from collections import deque
         self.values = deque([0, 0, 0])
@@ -32,22 +36,20 @@ class SRF02(Sensor):
         time.sleep(0.2)
         self.lastValue = self.bus.read_word_data(self.address, 0x02)
 
-        if self.lastValue > 16500:
-            self.lastValue = 16500
-        if self.lastValue < 3500:
-            self.lastValue = 3500
+        print "raw:" + str(self.lastValue),
 
-        self.lastValue = (self.lastValue - 3500) / 130
+        if self.lastValue > SRF02.maxValue:
+            self.lastValue = SRF02.maxValue
+        if self.lastValue < SRF02.minValue:
+            self.lastValue = SRF02.minValue
+
+        self.lastValue = (self.lastValue - SRF02.minValue) / SRF02.divide
         self.lastValue = min(self.lastValue, 100)
         self.lastValue = max(self.lastValue, 0)
 
         self.values.append(self.lastValue)
         self.values.popleft()
 
-        if self.lastValue < 30:
-            self.lastValue = (self.lastValue * 100) / 80
-        else:
-            self.lastValue = 50 + ((self.lastValue-70) * 100) / 70
 
 
     def read(self):
