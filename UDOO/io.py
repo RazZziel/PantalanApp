@@ -3,10 +3,20 @@
 
 import threading
 import time
+import numpy as np
 
 
 class Sensor(object):
+    def read():
+        pass
+
+
+class SRF02(Sensor):
+
     def __init__(self, bus, address):
+        from collections import deque
+        self.values = deque([0, 0, 0, 0, 0])
+
         try:
             import smbus
 
@@ -16,39 +26,44 @@ class Sensor(object):
         except Exception as e:
             print(e)
 
-    def read():
-        pass
-
-
-class SRF02(Sensor):
-
-    def __init__(self, bus, address):
-        super(SRF02, self).__init__(bus, address)
-
-        from collections import deque
-        self.values = deque([0, 0, 0])
-
         thr = threading.Thread(target=self.readLoop, args=(), kwargs={})
 
         thr.start()
 
     def readLoop(self):
         while True:
-            self.bus.write_byte_data(self.address, 0, 0x81)
-            time.sleep(0.1)
-            value = self.bus.read_word_data(self.address, 0x02)
+            try:
+                self.bus.write_byte_data(self.address, 0, 0x51)
+                time.sleep(0.1)
+                value = self.bus.read_word_data(self.address, 0x02)
 
-            self.values.popleft()
-            self.values.append(value)
+                self.values.popleft()
+                self.values.append(value)
+            except Exception as e:
+                print(e)
 
     def read(self):
+        mean = np.mean(self.values)
+        std = np.std(self.values)
+        data = [x for x in self.values if abs(x - mean) < 3 * std]
 
-        return sum(self.values) / len(self.values)
+        if not data:
+            return 0
+        return np.mean(data)
+
+
+class RandomSensor(Sensor):
+
+    def read(self):
+        return np.random.randint(4000, 5000)
 
 
 class IO:
     def __init__(self):
             self.sensors = [
+                RandomSensor(),
+                RandomSensor(),
+                RandomSensor(),
                 SRF02(3, 0x70)
             ]
 

@@ -11,7 +11,8 @@ class WebHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
-        self.wfile.write(bytes("{{\"sensors\": [{}]}}".format("; ".join(str(a) for a in sensors))))
+        #self.wfile.write(bytes("{{\"sensors\": [{}]}}".format("; ".join(str(a) for a in sensors))))
+        self.wfile.write(bytes("[{}]".format(", ".join(str(a) for a in sensors))))
 
 class NET:
     def __init__(self, io):
