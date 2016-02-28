@@ -15,7 +15,7 @@ class SRF02(Sensor):
 
     def __init__(self, bus, address):
         from collections import deque
-        self.values = deque([0, 0, 0, 0, 0])
+        self.values = deque([0, 0, 0])
         self.lastValue = 0
 
         try:
@@ -32,22 +32,23 @@ class SRF02(Sensor):
         time.sleep(0.2)
         self.lastValue = self.bus.read_word_data(self.address, 0x02)
 
-        print self.lastValue,
+        if self.lastValue > 16500:
+            self.lastValue = 16500
+        if self.lastValue < 3500:
+            self.lastValue = 3500
 
-        if self.lastValue > 15000:
-            self.lastValue = 0
+        self.lastValue = (self.lastValue - 3500) / 130
+        self.lastValue = min(self.lastValue, 100)
+        self.lastValue = max(self.lastValue, 0)
 
         self.values.append(self.lastValue)
         self.values.popleft()
 
-    def readLoop(self):
-        while True:
-            try:
-                self.measure()
-                self.values.append(self.lastValue)
-                self.values.popleft()
-            except Exception as e:
-                print(e)
+        if self.lastValue < 30:
+            self.lastValue = (self.lastValue * 100) / 80
+        else:
+            self.lastValue = 50 + ((self.lastValue-70) * 100) / 70
+
 
     def read(self):
 
@@ -60,14 +61,24 @@ class SRF02(Sensor):
         return np.mean(data)
 
 
+class SRF03(Sensor):
+
+    def __init__(self, other_sensor):
+        self.other_sensor = other_sensor
+
+    def measure(self):
+        pass
+
+    def read(self):
+        return max((85 - self.other_sensor.read()), 0)
+
+
 class Z1(Sensor):
 
     def __init__(self, device, rate):
         try:
             import serial
-            print "Initializing serial"
-            self.ser = serial.Serial(device, rate, timeout=1)
-            print "Done"
+            self.ser = serial.Serial(device, rate, timeout=5)
             self.lastValue = 0
 
         except Exception as e:
@@ -75,12 +86,11 @@ class Z1(Sensor):
 
     def measure(self):
         self.ser.write(bytearray([0x01]))
-        time.sleep(0.1)
-        self.ser.write(bytearray([0x00]))
+        time.sleep(5)
         self.lastValue = self.ser.read(2)
 
     def read(self):
-        return 123.4
+        return self.lastValue
 
 
 class RandomSensor(Sensor):
@@ -91,10 +101,11 @@ class RandomSensor(Sensor):
 
 class Sensors:
     def __init__(self):
+        srf02 = SRF02(3, 0x70)
         self.sensors = [
-            SRF02(3, 0x70),
+            srf02,
+            SRF03(srf02),
             SRF02(3, 0x72),
-            Z1('/dev/ttyMCC', 9600)
         ]
 
         thr = threading.Thread(target=self.pollSensors, args=(), kwargs={})
@@ -109,8 +120,8 @@ class Sensors:
 
     def pollSensors(self):
         while True:
+            print "\t\t\t\t\t\t\t\t",
             for s in self.sensors:
                 s.measure()
                 print s.read(),
-                time.sleep(0.1)
             print
