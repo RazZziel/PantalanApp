@@ -5,9 +5,9 @@ import BaseHTTPServer
 
 class WebHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
-        sensors = self.io.read()
+        sensors = self.sensors.read()
         #sensors = [1000, 1000, 1000]
-        
+
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
@@ -15,8 +15,8 @@ class WebHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write(bytes("[{}]".format(", ".join(str(a) for a in sensors))))
 
 class NET:
-    def __init__(self, io):
-        WebHandler.io = io
+    def __init__(self, sensors):
+        WebHandler.sensors = sensors
         server_address = ('', 1808)
         try:
             print("Serving on port 1808")

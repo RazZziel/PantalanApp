@@ -65,15 +65,18 @@ class Z1(Sensor):
     def __init__(self, device, rate):
         try:
             import serial
-            self.ser = serial.Serial(device, rate)
+            print "Initializing serial"
+            self.ser = serial.Serial(device, rate, timeout=1)
+            print "Done"
             self.lastValue = 0
 
         except Exception as e:
             print(e)
 
     def measure(self):
-        self.ser.write(0x01)
+        self.ser.write(bytearray([0x01]))
         time.sleep(0.1)
+        self.ser.write(bytearray([0x00]))
         self.lastValue = self.ser.read(2)
 
     def read(self):
@@ -86,12 +89,12 @@ class RandomSensor(Sensor):
         return np.random.randint(4000, 5000)
 
 
-class IO:
+class Sensors:
     def __init__(self):
         self.sensors = [
             SRF02(3, 0x70),
             SRF02(3, 0x72),
-            Z1('/dev/ttysr0', 9600)
+            Z1('/dev/ttyMCC', 9600)
         ]
 
         thr = threading.Thread(target=self.pollSensors, args=(), kwargs={})
@@ -107,10 +110,7 @@ class IO:
     def pollSensors(self):
         while True:
             for s in self.sensors:
-                try:
-                    s.measure()
-                    print s.read(),
-                    time.sleep(0.1)
-                except Exception:
-                    print "ERR",
+                s.measure()
+                print s.read(),
+                time.sleep(0.1)
             print
