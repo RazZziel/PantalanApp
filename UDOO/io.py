@@ -16,6 +16,7 @@ class SRF02(Sensor):
     def __init__(self, bus, address):
         from collections import deque
         self.values = deque([0, 0, 0, 0, 0])
+        self.lastValue = 0
 
         try:
             import smbus
@@ -34,11 +35,11 @@ class SRF02(Sensor):
         while True:
             try:
                 self.bus.write_byte_data(self.address, 0, 0x51)
-                time.sleep(0.1)
-                value = self.bus.read_word_data(self.address, 0x02)
+                time.sleep(0.2)
+                self.lastValue = self.bus.read_word_data(self.address, 0x02)
 
+                self.values.append(self.lastValue)
                 self.values.popleft()
-                self.values.append(value)
             except Exception as e:
                 print(e)
 
@@ -61,10 +62,8 @@ class RandomSensor(Sensor):
 class IO:
     def __init__(self):
             self.sensors = [
-                RandomSensor(),
-                RandomSensor(),
-                RandomSensor(),
-                SRF02(3, 0x70)
+                SRF02(3, 0x70),
+                SRF02(3, 0x72)
             ]
 
     def addSensor(self, new_sensor):
