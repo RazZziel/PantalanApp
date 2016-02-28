@@ -32,24 +32,28 @@ class SRF02(Sensor):
             print(e)
 
     def measure(self):
-        self.bus.write_byte_data(self.address, 0, 0x51)
-        time.sleep(0.2)
-        self.lastValue = self.bus.read_word_data(self.address, 0x02)
 
-        print "raw:" + str(self.lastValue),
+        try:
+            self.bus.write_byte_data(self.address, 0, 0x51)
+            time.sleep(0.2)
+            self.lastValue = self.bus.read_word_data(self.address, 0x02)
 
-        if self.lastValue > SRF02.maxValue:
-            self.lastValue = SRF02.maxValue
-        if self.lastValue < SRF02.minValue:
-            self.lastValue = SRF02.minValue
+            print "raw:" + str(self.lastValue),
 
-        self.lastValue = (self.lastValue - SRF02.minValue) / SRF02.divide
-        self.lastValue = min(self.lastValue, 100)
-        self.lastValue = max(self.lastValue, 0)
+            if self.lastValue > SRF02.maxValue:
+                self.lastValue = SRF02.maxValue
+            if self.lastValue < SRF02.minValue:
+                self.lastValue = SRF02.minValue
 
-        self.values.append(self.lastValue)
-        self.values.popleft()
+            self.lastValue = (self.lastValue - SRF02.minValue) / SRF02.divide
+            self.lastValue = min(self.lastValue, 100)
+            self.lastValue = max(self.lastValue, 0)
 
+            self.values.append(self.lastValue)
+            self.values.popleft()
+
+        except Exception:
+            pass
 
 
     def read(self):
@@ -72,7 +76,7 @@ class SRF03(Sensor):
         pass
 
     def read(self):
-        return max((85 - self.other_sensor.read()), 0)
+        return max((70 - self.other_sensor.read()), 0)
 
 
 class Z1(Sensor):
