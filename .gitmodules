@@ -1,3 +1,6 @@
 [submodule "Android"]
 	path = Android
 	url = git@github.com:Knight81/Pantalanapp.git
+[submodule "Server"]
+	path = Server
+	url = git@github.com:RazZziel/PantalanAppServer.git
