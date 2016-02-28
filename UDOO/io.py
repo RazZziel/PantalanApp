@@ -53,10 +53,10 @@ class SRF02(Sensor):
 
         mean = np.mean(self.values)
         std = np.std(self.values)
-        data = [x for x in self.values if abs(x - mean) < 3 * std]
+        data = [x for x in self.values if abs(x - mean) <= 3 * std]
 
         if not data:
-            return 0
+            return self.lastValue
         return np.mean(data)
 
 
